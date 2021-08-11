@@ -93,6 +93,8 @@ typedef int Py_ssize_t;
 #define	Py23_String_Size	PyString_Size
 #define	Py23_String_Type	PyString_Type
 #define	Py23_TYPE(p)		((p)->ob_type)
+#define	Py23_PyClass_Check	PyClass_Check
+#define	Py23_PyEval_CallObject 	PyEval_CallObject
 #else
 #define	Py23_ExceptionBase	PyExc_Exception
 #define	Py23_Int_AsLong		PyLong_AsLong
@@ -102,11 +104,13 @@ typedef int Py_ssize_t;
 #define	Py23_String_Check	PyUnicode_Check
 #define Py23_String_FromString	PyUnicode_FromString
 #define	Py23_String_FromStringAndSize PyUnicode_FromStringAndSize
-#define	Py23_String_GET_SIZE	PyUnicode_GET_SIZE
+#define	Py23_String_GET_SIZE(obj)	PyUnicode_GET_LENGTH(obj) * PyUnicode_KIND(obj)
 #define	Py23_String_Parse_Char	"U"
-#define	Py23_String_Size	PyUnicode_Size
+#define	Py23_String_Size	PyUnicode_GET_LENGTH
 #define	Py23_String_Type	PyUnicode_Type
 #define	Py23_TYPE(p)		Py_TYPE(p)
+#define PyClass_Check(obj)	PyObject_IsInstance(obj, (PyObject *)&PyType_Type)
+#define Py23_PyEval_CallObject	PyObject_CallObject
 #endif
 #define	Py23_Stringify(x)	#x
 
@@ -578,7 +582,7 @@ static int syslog_path_traceback(
       "OOOOO", ptype, pvalue, ptraceback, Py_None, pamHandle->syslogFile);
   if (args != 0)
   {
-    py_resultobj = PyEval_CallObject(pamHandle->print_exception, args);
+    py_resultobj = Py23_PyEval_CallObject(pamHandle->print_exception, args);
     if (py_resultobj != 0)
       SyslogFile_flush(pamHandle->syslogFile);
   }
@@ -876,7 +880,7 @@ static int PamHandle_set_item(
     value = 0;
   else
   {
-    value = Py23_String_AsString(pyValue);
+    value = (char *)Py23_String_AsString(pyValue);
     if (value == 0)
     {
       snprintf(
@@ -2802,7 +2806,7 @@ static int call_python_handler(
   /*
    * Call the Python handler function.
    */
-  py_resultobj = PyEval_CallObject(handler_function, handler_args);
+  py_resultobj = Py23_PyEval_CallObject(handler_function, handler_args);
   /*
    * Did it throw an exception?
    */
