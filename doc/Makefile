@@ -2,9 +2,13 @@ PREFIX	?= /usr
 DOCDIR	?= $(PREFIX)/share/doc/pam_python
 
 .PHONY: build
-build:
+build:	html/pam_python.html html/index.html
+
+html/pam-python.html:
 	sphinx-build -b html -E . html
-	rm -f html/index.html && ln -s pam_python.html html/index.html
+
+html/index.html:
+	ln -s pam_python.html html/index.html
 
 .PHONY: install install-doc
 install: install-doc
