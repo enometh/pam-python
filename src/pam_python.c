@@ -1169,7 +1169,7 @@ static int PamEnv_mp_assign(PyObject* self, PyObject* key, PyObject* value)
           PyExc_TypeError, "PAM environment value must be a string");
       goto error_exit;
     }
-    value_str = malloc(Py23_String_Size(key) + 1 + Py23_String_Size(value) + 1);
+    value_str = malloc(Py23_String_GET_SIZE(key) + 1 + Py23_String_GET_SIZE(value) + 1);
     if (value_str == 0)
     {
       PyErr_NoMemory();
