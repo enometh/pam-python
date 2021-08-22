@@ -54,7 +54,7 @@
 #ifdef __APPLE__
 #define DEFAULT_SECURITY_DIR	"/usr/lib/pam/"
 #else
-#define	DEFAULT_SECURITY_DIR	"/lib/security/"
+#define	DEFAULT_SECURITY_DIR	"/lib64/security/"
 #endif
 #endif
 
