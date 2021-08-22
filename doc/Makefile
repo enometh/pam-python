@@ -4,7 +4,7 @@ DOCDIR	?= $(PREFIX)/share/doc/pam_python
 .PHONY: build
 build:	html/pam_python.html html/index.html
 
-html/pam-python.html:
+html/pam_python.html:
 	sphinx-build -b html -E . html
 
 html/index.html:
