@@ -114,6 +114,12 @@ typedef int Py_ssize_t;
 #endif
 #define	Py23_Stringify(x)	#x
 
+
+// ;madhu 210822 - todo conditionalize for py3
+#define PYGILSTATE_PREPARE	PyGILState_STATE state; int state_initialized = 0;
+#define PYGILSTATE_ENSURE	state = PyGILState_Ensure(); state_initialized = 1;
+#define PYGILSTATE_RELEASE	if (state_initialized) PyGILState_Release(state);
+
 /*
  * The python interpreter's shared library.
  */
@@ -2220,7 +2226,9 @@ static void cleanup_pamHandle(pam_handle_t* pamh, void* data, int error_status)
   PyObject*		handler_function = 0;
   int			py_initialized;
   static const char*	handler_name = "pam_sm_end";
+  PYGILSTATE_PREPARE
 
+  PYGILSTATE_ENSURE
   (void)pamh;
   (void)error_status;
   handler_function =
@@ -2237,12 +2245,15 @@ static void cleanup_pamHandle(pam_handle_t* pamh, void* data, int error_status)
   py_xdecref(handler_function);
   py_initialized = pamHandle->py_initialized;
   Py_DECREF(pamHandle);
+  PYGILSTATE_RELEASE
+
   if (py_initialized)
   {
     pypam_initialize_count -= 1;
     if (pypam_initialize_count == 0)
       Py_Finalize();
   }
+
   dlclose(dlhandle);
 }
 
@@ -2465,6 +2476,7 @@ static int get_pamHandle(
   SyslogFileObject*	syslogFile = 0;
   PyObject*		tracebackModule = 0;
   int			pam_result;
+  PYGILSTATE_PREPARE
 
   /*
    * Figure out where the module lives.
@@ -2523,6 +2535,9 @@ static int get_pamHandle(
       initialise_python();
     pypam_initialize_count += 1;
   }
+
+  PYGILSTATE_ENSURE
+
   /*
    * Create a throw away module because heap types need one, apparently.
    */
@@ -2735,6 +2750,8 @@ error_exit:
   py_xdecref(pamHandle_module);
   py_xdecref((PyObject*)syslogFile);
   py_xdecref(tracebackModule);
+
+  PYGILSTATE_RELEASE
   return pam_result;
 }
 
@@ -2839,6 +2856,7 @@ static int call_handler(
   PamHandleObject*	pamHandle = 0;
   PyObject*		py_resultobj = 0;
   int			pam_result;
+  PYGILSTATE_PREPARE
 
   /*
    * Initialise Python, and get a copy of our object.
@@ -2846,6 +2864,9 @@ static int call_handler(
   pam_result = get_pamHandle(&pamHandle, pamh, argv);
   if (pam_result != PAM_SUCCESS)
     goto error_exit;
+
+  PYGILSTATE_ENSURE
+
   /*
    * See if the function we have to call has been defined.
    */
@@ -2878,6 +2899,8 @@ error_exit:
   py_xdecref(handler_function);
   py_xdecref((PyObject*)pamHandle);
   py_xdecref(py_resultobj);
+  PYGILSTATE_RELEASE
+
   return pam_result;
 }
 
